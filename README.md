@@ -29,8 +29,8 @@
 
 ```mermaid
 flowchart LR
-    Client --> Next.js
-    Next.js --> API["Server Actions/API"]
+    Client --> Next["Next.js"]
+    Next --> API["Server Actions/API"]
     API --> Prisma
     Prisma --> PostgreSQL
 ```
