@@ -29,10 +29,10 @@
 
 ```mermaid
 flowchart LR
-    Client --> Next["Next.js"]
-    Next --> API["Server Actions/API"]
-    API --> Prisma
-    Prisma --> PostgreSQL
+    A[Client] --> B[Next.js]
+    B --> C[Server Actions/API]
+    C --> D[Prisma]
+    D --> E[PostgreSQL]
 ```
 
 ## How it works
