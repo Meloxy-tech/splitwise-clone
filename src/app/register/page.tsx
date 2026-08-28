@@ -19,28 +19,39 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      
+      let data;
+      try {
+        data = await res.json();
+      } catch (err) {
+        throw new Error("Server returned an invalid response. The database might be waking up (Render free tier). Please try again in 10 seconds.");
+      }
 
-    if (!res.ok) {
+      if (!res.ok) {
+        setLoading(false);
+        setError(data.error ?? "Something went wrong");
+        return;
+      }
+
+      const result = await signIn("credentials", { email, password, redirect: false });
       setLoading(false);
-      setError(data.error ?? "Something went wrong");
-      return;
+      if (result?.error) {
+        setError("Account created — please log in");
+        router.push("/login");
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err: any) {
+      setLoading(false);
+      setError(err.message || "Something went wrong.");
     }
-
-    const result = await signIn("credentials", { email, password, redirect: false });
-    setLoading(false);
-    if (result?.error) {
-      setError("Account created — please log in");
-      router.push("/login");
-      return;
-    }
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
