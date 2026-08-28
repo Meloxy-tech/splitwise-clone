@@ -1,50 +1,67 @@
 # Ledger — Expense Splitter
 
-A full-stack expense-splitting app (Splitwise-style) built to run entirely on free-tier infrastructure — no paid APIs, no API keys required.
+> A full-stack expense-sharing platform with group management, automated balance calculation, and optimized debt settlement.
 
-**Live demo:** _add your deployed URL here after deploying_
-**Demo login:** `alice@example.com` / `password123` (after running the seed script)
+🚀 **Live Demo:** [https://splitwise-clone-og5u-f3enfoatn.vercel.app/](https://splitwise-clone-og5u-f3enfoatn.vercel.app/)
 
----
+![Ledger Dashboard](./public/assets/hero-screenshot.png)
 
-## What it does
+## Features
 
-- Create groups, invite members by email
-- Log shared expenses, split **equally**, by **exact amounts**, or by **percentage**
-- See each member's live net balance
-- **Debt simplification**: a greedy algorithm reduces a tangle of pairwise debts down to the minimum practical number of payments (e.g. 5 people with mixed debts settle in ≤4 transactions instead of 10+)
-- Mark payments as settled and watch balances update
+- **Create groups:** Organize expenses by trip, household, or event.
+- **Add expenses:** Log shared costs quickly and easily.
+- **Split expenses:** Split equally, by exact amounts, or by percentage.
+- **View balances:** See exactly who owes whom at a glance.
+- **Settle debts:** Record payments to clear out balances.
+- **Authentication:** Secure email/password login.
 
-## Why these engineering choices
+## Tech Stack
 
-- **Local, zero-cost balance calculation.** The core feature — figuring out who owes whom — is pure math (sum of shares vs. sum paid), so it needed no external service at all. This was a deliberate choice to keep the app free to run indefinitely, not a workaround.
-- **Greedy debt simplification, not optimal.** Finding the true *minimum* number of transactions to settle a set of balances is NP-hard (it's equivalent to a set-partition problem). The greedy "largest debtor pays largest creditor" heuristic runs in O(n log n), is easy to reason about and test, and gets very close to optimal for realistic group sizes. This tradeoff — and why it was made — is exactly the kind of judgment call worth explaining in an interview.
-- **Server-computed splits.** The client sends what the user typed (amount, percentages); the server is the only place that computes and persists actual share amounts, so a manipulated client request can't create inconsistent data.
-- **Single Next.js app, not a separate frontend/backend.** API routes live alongside the UI. Fewer moving parts, one deployment target, no CORS configuration — appropriate for this project's scope.
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
+![NextAuth](https://img.shields.io/badge/NextAuth-000000?style=for-the-badge)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
 
-## Tech stack
+## Architecture
 
-| Layer | Choice | Cost |
-|---|---|---|
-| Framework | Next.js 14 (App Router) | Free |
-| Styling | Tailwind CSS | Free |
-| Database | PostgreSQL (Supabase or Neon free tier) | Free |
-| ORM | Prisma | Free |
-| Auth | NextAuth.js (credentials + bcrypt) | Free |
-| Hosting | Vercel | Free |
-| Tests | Vitest | Free |
-| CI | GitHub Actions | Free |
+```mermaid
+flowchart LR
+    Client --> Next.js
+    Next.js --> API["Server Actions/API"]
+    API --> Prisma
+    Prisma --> PostgreSQL
+```
 
-No OpenAI, no third-party AI API, no paid service of any kind is required to run this in production.
+## How it works
 
----
+1. **Add an Expense**: A user adds an expense, specifying who paid and how it's split.
+2. **Calculate Shares**: The server computes the exact share for each member based on the split type.
+3. **Update Balances**: Each member's running net balance is updated in the database.
+4. **Simplify Debts**: The greedy algorithm computes the minimum number of transactions needed to settle all positive and negative balances.
+5. **Settle Up**: Users record payments, updating balances and recalculating the simplified debt graph.
+
+## Debt Simplification Algorithm
+
+Finding the true *minimum* number of transactions to settle a set of balances is NP-hard (it's equivalent to a set-partition problem). The application uses a greedy "largest debtor pays largest creditor" heuristic that runs in O(n log n). It is easy to reason about and test, and gets very close to optimal for realistic group sizes.
+
+## Testing / CI
+
+We have robust testing and CI/CD pipelines in place:
+- ✓ Unit tests
+- ✓ Type checking
+- ✓ ESLint
+- ✓ Production build checks
+- ✓ Database migration checks
 
 ## Getting started
 
 ### 1. Clone and install
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Meloxy-tech/splitwise-clone
 cd splitwise-clone
 npm install
 ```
@@ -81,59 +98,11 @@ npm run dev
 
 Visit `http://localhost:3000`.
 
----
+## Roadmap
 
-## Scripts
-
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start the dev server |
-| `npm run build` | Production build |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript, no emit |
-| `npm test` | Run the Vitest suite (debt-simplification algorithm tests) |
-| `npm run prisma:migrate` | Create/apply a new migration (dev) |
-| `npm run prisma:deploy` | Apply existing migrations (CI/production) |
-| `npm run prisma:studio` | Visual DB browser |
-| `npm run prisma:seed` | Load demo data |
-
-## Deploying (all free tier)
-
-1. Push this repo to GitHub.
-2. **Database:** create a Supabase or Neon project, copy the connection string.
-3. **App:** import the repo into [Vercel](https://vercel.com) → set `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL` (your production URL) as environment variables.
-4. Vercel runs `npm install` → `postinstall` generates the Prisma client → `next build`. Run `npx prisma migrate deploy` once against the production `DATABASE_URL` (locally, or as a one-off Vercel build step) to create the tables.
-5. Done — you have a live URL costing $0/month.
-
-## CI
-
-`.github/workflows/ci.yml` runs on every push/PR: lint → typecheck → unit tests → migration check → build, against a real Postgres service container. No secrets beyond a throwaway test `NEXTAUTH_SECRET` are needed for CI to pass.
-
-## Project structure
-
-```
-src/
-  app/
-    api/            # route handlers (auth, groups, expenses, balances, settle)
-    dashboard/       # groups list
-    groups/[id]/     # group detail: expenses, balances, settle-up
-    login/, register/
-  components/         # client components (forms, panels, navbar)
-  lib/
-    debt-simplify.ts  # the core algorithm — pure functions, fully unit tested
-    auth.ts            # NextAuth config
-    prisma.ts           # Prisma client singleton
-    validations.ts       # zod schemas
-    rate-limit.ts          # in-memory limiter for auth routes
-prisma/
-  schema.prisma       # data model
-  seed.ts               # demo data
-tests/
-  debt-simplify.test.ts # algorithm unit tests
-```
-
-## Known limitations (honest, on purpose)
-
-- Group invites require the invitee to already have an account — there's no email-sending step. A real product would queue an invite email; that's explicitly out of scope here.
-- The in-memory rate limiter resets on redeploy and doesn't share state across serverless instances. Fine for a single-instance or hobby deployment; swap for Upstash Redis (also free-tier) if you scale past that.
-- No currency conversion — all amounts are treated as a single currency.
+- [ ] Expense editing
+- [ ] Group invitations
+- [ ] Notifications
+- [ ] Expense attachments
+- [ ] Payment integration
+- [ ] Mobile optimization
