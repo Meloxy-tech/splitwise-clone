@@ -93,7 +93,10 @@ export default async function GroupPage({ params }: { params: { id: string } }) 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
           <div>
             <h2 className="font-display text-lg mb-3">Expenses</h2>
-            <ExpenseList expenses={group.expenses} canDeleteId={userId} />
+            <ExpenseList
+              expenses={group.expenses.map(e => ({ ...e, amount: Number(e.amount) }))}
+              canDeleteId={userId}
+            />
           </div>
           <BalancesPanel groupId={group.id} balances={balances} suggestedTransactions={suggestedTransactions} />
         </div>
